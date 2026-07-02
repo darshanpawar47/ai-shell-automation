@@ -4,8 +4,8 @@
 # AWS VPC Provisioning Script
 #
 # Author      : Darshan Pawar
-# Purpose     : Create a production-ready AWS VPC using AWS CLI
-# Version     : 1.0
+# Purpose     : Create a production-ready AWS VPC with Internet Gateway
+# Version     : 2.0
 ###############################################################################
 
 set -euo pipefail
@@ -37,7 +37,7 @@ BLUE="\033[0;34m"
 NC="\033[0m"
 
 ########################################
-# Logging Functions
+# Logging
 ########################################
 
 info() {
@@ -57,7 +57,7 @@ error() {
 }
 
 ########################################
-# Validation Functions
+# Validation
 ########################################
 
 check_aws_cli() {
@@ -65,7 +65,7 @@ check_aws_cli() {
     info "Checking AWS CLI installation..."
 
     if ! command -v aws >/dev/null 2>&1; then
-        error "AWS CLI is not installed."
+        error "AWS CLI not found."
         exit 1
     fi
 
@@ -79,7 +79,7 @@ check_aws_credentials() {
     if ! aws sts get-caller-identity \
         --region "$REGION" >/dev/null 2>&1; then
 
-        error "AWS credentials are not configured or are invalid."
+        error "AWS credentials are invalid."
         exit 1
     fi
 
@@ -95,11 +95,12 @@ check_region() {
         --query "Regions[].RegionName" \
         --output text | grep -qw "$REGION"; then
 
-        error "Region '$REGION' is invalid."
+        error "Invalid AWS Region."
+
         exit 1
     fi
 
-    success "Region $REGION is valid."
+    success "Region verified."
 }
 
 ########################################
@@ -116,11 +117,9 @@ create_vpc() {
         --query "Vpc.VpcId" \
         --output text)
 
-    success "VPC created successfully."
+    success "VPC created."
 
     info "VPC ID : $VPC_ID"
-
-    info "Tagging VPC..."
 
     aws ec2 create-tags \
         --region "$REGION" \
@@ -129,7 +128,43 @@ create_vpc() {
             Key=Name,Value="${PROJECT_NAME}-vpc" \
             Key=Environment,Value="$ENVIRONMENT"
 
-    success "VPC tagged successfully."
+    success "VPC tagged."
+}
+
+########################################
+# Create Internet Gateway
+########################################
+
+create_internet_gateway() {
+
+    info "Creating Internet Gateway..."
+
+    IGW_ID=$(aws ec2 create-internet-gateway \
+        --region "$REGION" \
+        --query "InternetGateway.InternetGatewayId" \
+        --output text)
+
+    success "Internet Gateway created."
+
+    info "Internet Gateway ID : $IGW_ID"
+
+    info "Attaching Internet Gateway..."
+
+    aws ec2 attach-internet-gateway \
+        --region "$REGION" \
+        --internet-gateway-id "$IGW_ID" \
+        --vpc-id "$VPC_ID"
+
+    success "Internet Gateway attached."
+
+    aws ec2 create-tags \
+        --region "$REGION" \
+        --resources "$IGW_ID" \
+        --tags \
+            Key=Name,Value="${PROJECT_NAME}-igw" \
+            Key=Environment,Value="$ENVIRONMENT"
+
+    success "Internet Gateway tagged."
 }
 
 ########################################
@@ -138,9 +173,9 @@ create_vpc() {
 
 main() {
 
-    info "======================================="
+    info "=============================================="
     info "AWS VPC Provisioning Started"
-    info "======================================="
+    info "=============================================="
 
     check_aws_cli
 
@@ -152,14 +187,17 @@ main() {
 
     create_vpc
 
-    success "======================================="
-    success "AWS VPC Created Successfully"
-    success "======================================="
+    create_internet_gateway
+
+    success "=============================================="
+    success "AWS Infrastructure Created Successfully"
+    success "=============================================="
 
     echo
-    echo "VPC ID      : $VPC_ID"
-    echo "Region      : $REGION"
-    echo "CIDR Block  : $VPC_CIDR"
+    echo "VPC ID               : $VPC_ID"
+    echo "Internet Gateway ID  : $IGW_ID"
+    echo "Region               : $REGION"
+    echo "CIDR                 : $VPC_CIDR"
     echo
 }
 
