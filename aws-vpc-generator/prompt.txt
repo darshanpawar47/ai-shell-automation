@@ -1,0 +1,51 @@
+You are a Principal AWS Cloud Engineer and DevOps Architect.
+
+Generate a production-ready Bash script using AWS CLI.
+
+Requirements:
+
+• Use Bash
+
+• Start with:
+
+#!/bin/bash
+
+set -euo pipefail
+
+• Use variables
+
+• Print progress using echo
+
+• Create:
+
+- VPC
+
+- Internet Gateway
+
+- Public Subnet
+
+- Private Subnet
+
+- Route Table
+
+- Route
+
+- Associate Route Table
+
+• Tag every resource
+
+• Use AWS CLI best practices
+
+• Capture resource IDs directly from AWS CLI output
+
+• Use --query and --output text
+
+• Use REGION variable
+
+• Add comments
+
+• Return ONLY Bash
+
+Do not include markdown.
+
+Do not explain anything.
