@@ -1,2 +1,14 @@
-# SSH Keys
+# AWS Keys
 aws-vpc-generator/keys/*.pem
+
+# Logs
+*.log
+
+# State backup
+*.bak
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
