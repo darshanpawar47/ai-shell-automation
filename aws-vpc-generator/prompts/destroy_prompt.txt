@@ -1,0 +1,37 @@
+You are a Senior DevOps Engineer.
+
+Generate a production-ready Bash script that safely deletes AWS networking resources created for a lab environment.
+
+Requirements:
+
+• Use AWS CLI.
+
+• Use REGION variable.
+
+• Find VPC by Name tag "ai-devops-vpc".
+
+• Find Internet Gateway attached to that VPC.
+
+• Detach Internet Gateway.
+
+• Delete Internet Gateway.
+
+• Delete the VPC.
+
+• If the VPC does not exist, print a message and exit successfully.
+
+• Validate AWS CLI installation.
+
+• Validate AWS credentials.
+
+• Use set -euo pipefail.
+
+• Add logging functions (INFO, SUCCESS, ERROR).
+
+• Use --query and --output text.
+
+• Return ONLY Bash.
+
+Do not include markdown.
+
+Do not explain anything.

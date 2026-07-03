@@ -9,6 +9,34 @@
 ###############################################################################
 
 set -euo pipefail
+source "$(dirname "$0")/lib/config.sh"
+source "$(dirname "$0")/lib/logging.sh"
+source "$(dirname "$0")/lib/validation.sh"
+source "$(dirname "$0")/lib/aws.sh"
+
+check_aws_cli
+check_credentials
+check_region
+
+if get_vpc
+then
+    log_success "Reusing existing VPC."
+else
+    create_vpc
+    tag_vpc
+fi
+
+if get_igw
+then
+    log_success "Reusing existing Internet Gateway."
+else
+    create_igw
+    attach_igw
+    tag_igw
+fi
+
+exit 0
+
 
 ########################################
 # Configuration
