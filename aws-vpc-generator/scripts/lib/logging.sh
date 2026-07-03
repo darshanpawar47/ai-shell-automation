@@ -1,31 +1,34 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-#############################################
-# Colors
-#############################################
+###############################################################################
+# Logging Library
+###############################################################################
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-#############################################
-# Logging Functions
-#############################################
+timestamp() {
+    date "+%Y-%m-%d %H:%M:%S"
+}
 
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    echo "$(timestamp) [INFO] $1"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    echo "$(timestamp) [SUCCESS] $1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo "$(timestamp) [WARNING] $1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo "$(timestamp) [ERROR] $1"
+}
+
+log_section() {
+
+    echo
+    echo "===================================================="
+    echo "$1"
+    echo "===================================================="
+
 }

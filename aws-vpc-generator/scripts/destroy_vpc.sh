@@ -1,133 +1,59 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+###############################################################################
+# AI Infrastructure Automation Framework
+#
+# Module : AWS Infrastructure Cleanup
+# Version: 3.2
+###############################################################################
 
 set -euo pipefail
 
-#############################################
-# Configuration
-#############################################
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-REGION="ap-south-1"
-VPC_NAME="ai-devops-vpc"
+source "${SCRIPT_DIR}/lib/config.sh"
+source "${SCRIPT_DIR}/lib/logging.sh"
+source "${SCRIPT_DIR}/lib/validation.sh"
+source "${SCRIPT_DIR}/lib/state.sh"
+source "${SCRIPT_DIR}/lib/aws.sh"
 
-#############################################
-# Colors
-#############################################
+initialize() {
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+    log_section "AI Infrastructure Cleanup"
 
-#############################################
-# Logging
-#############################################
-
-info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
+main() {
 
-error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+    initialize
 
-#############################################
-# Validation
-#############################################
+    validate_environment
 
-info "Checking AWS CLI..."
+    log_section "Current Infrastructure State"
 
-if ! command -v aws >/dev/null 2>&1; then
-    error "AWS CLI not installed."
-    exit 1
-fi
+    show_state
+    echo
+read -p "Type DELETE to destroy the infrastructure: " CONFIRM
 
-success "AWS CLI found."
-
-info "Checking AWS credentials..."
-
-aws sts get-caller-identity >/dev/null
-
-success "AWS credentials verified."
-
-#############################################
-# Find VPCs
-#############################################
-
-info "Searching for VPCs with Name tag: ${VPC_NAME}"
-
-VPCS=$(aws ec2 describe-vpcs \
-    --region "$REGION" \
-    --filters "Name=tag:Name,Values=${VPC_NAME}" \
-    --query "Vpcs[].VpcId" \
-    --output text)
-
-if [ -z "$VPCS" ]; then
-    success "No matching VPCs found."
+if [[ "$CONFIRM" != "DELETE" ]]; then
+    log_warning "Cleanup cancelled."
     exit 0
 fi
 
-#############################################
-# Delete each VPC
-#############################################
+    delete_internet_gateway
 
-for VPC_ID in $VPCS
-do
+    delete_vpc
 
-    echo
-    info "Processing VPC: $VPC_ID"
+    delete_state "IGW_ID"
 
-    #########################################
-    # Find attached Internet Gateway
-    #########################################
+    delete_state "VPC_ID"
 
-    IGW_ID=$(aws ec2 describe-internet-gateways \
-        --region "$REGION" \
-        --filters "Name=attachment.vpc-id,Values=${VPC_ID}" \
-        --query "InternetGateways[0].InternetGatewayId" \
-        --output text)
+    log_section "Updated Infrastructure State"
 
-    if [ "$IGW_ID" != "None" ] && [ -n "$IGW_ID" ]; then
+    show_state
 
-        info "Detaching Internet Gateway: $IGW_ID"
+    log_success "Infrastructure cleanup completed successfully."
 
-        aws ec2 detach-internet-gateway \
-            --internet-gateway-id "$IGW_ID" \
-            --vpc-id "$VPC_ID" \
-            --region "$REGION"
+}
 
-        success "Internet Gateway detached."
-
-        info "Deleting Internet Gateway..."
-
-        aws ec2 delete-internet-gateway \
-            --internet-gateway-id "$IGW_ID" \
-            --region "$REGION"
-
-        success "Internet Gateway deleted."
-
-    else
-        info "No Internet Gateway attached."
-    fi
-
-    #########################################
-    # Delete VPC
-    #########################################
-
-    info "Deleting VPC..."
-
-    aws ec2 delete-vpc \
-        --vpc-id "$VPC_ID" \
-        --region "$REGION"
-
-    success "Deleted VPC: $VPC_ID"
-
-done
-
-echo
-echo "==============================================="
-success "Cleanup completed successfully."
-echo "==============================================="
+main "$@"
