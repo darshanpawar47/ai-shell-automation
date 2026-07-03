@@ -108,3 +108,26 @@ show_state() {
     fi
 
 }
+
+###############################################################################
+# Infrastructure Summary
+###############################################################################
+
+show_summary() {
+
+    log_section "Infrastructure Summary"
+
+    echo "VPC               : $(load_state VPC_ID)"
+    echo "Public Subnet     : $(load_state PUBLIC_SUBNET_ID)"
+    echo "Security Group    : $(load_state SECURITY_GROUP_ID)"
+    echo "EC2 Instance      : $(load_state INSTANCE_ID)"
+    echo "Instance State    : $(load_state INSTANCE_STATE)"
+    echo "Public IP         : $(load_state PUBLIC_IP)"
+    echo "Private IP        : $(load_state PRIVATE_IP)"
+    echo "Availability Zone : $(load_state AVAILABILITY_ZONE)"
+    echo "Region            : $(load_state REGION)"
+
+    echo
+    log_success "Infrastructure provisioning completed successfully."
+
+}

@@ -85,3 +85,133 @@ ensure_key_pair() {
     save_state "KEY_PAIR_NAME" "$KEY_PAIR_NAME"
 
 }
+
+###############################################################################
+# Ensure EC2 Instance
+###############################################################################
+
+ensure_ec2() {
+
+    log_section "EC2 Instance"
+
+    INSTANCE_ID=$(aws ec2 describe-instances \
+        --region "$REGION" \
+        --filters \
+            "Name=tag:Project,Values=$PROJECT_NAME" \
+            "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+        --query "Reservations[0].Instances[0].InstanceId" \
+        --output text)
+
+    if [[ "$INSTANCE_ID" != "None" ]]; then
+
+        log_success "Existing EC2 instance found."
+
+        save_state "INSTANCE_ID" "$INSTANCE_ID"
+        log_info "Waiting for EC2 instance to reach 'running' state..."
+
+aws ec2 wait instance-running \
+    --region "$REGION" \
+    --instance-ids "$INSTANCE_ID"
+
+log_success "EC2 instance is running."
+
+INSTANCE_STATE=$(aws ec2 describe-instances \
+    --region "$REGION" \
+    --instance-ids "$INSTANCE_ID" \
+    --query "Reservations[0].Instances[0].State.Name" \
+    --output text)
+
+PUBLIC_IP=$(aws ec2 describe-instances \
+    --region "$REGION" \
+    --instance-ids "$INSTANCE_ID" \
+    --query "Reservations[0].Instances[0].PublicIpAddress" \
+    --output text)
+
+PRIVATE_IP=$(aws ec2 describe-instances \
+    --region "$REGION" \
+    --instance-ids "$INSTANCE_ID" \
+    --query "Reservations[0].Instances[0].PrivateIpAddress" \
+    --output text)
+
+AVAILABILITY_ZONE=$(aws ec2 describe-instances \
+    --region "$REGION" \
+    --instance-ids "$INSTANCE_ID" \
+    --query "Reservations[0].Instances[0].Placement.AvailabilityZone" \
+    --output text)
+
+INSTANCE_TYPE_VALUE=$(aws ec2 describe-instances \
+    --region "$REGION" \
+    --instance-ids "$INSTANCE_ID" \
+    --query "Reservations[0].Instances[0].InstanceType" \
+    --output text)
+
+save_state "INSTANCE_STATE" "$INSTANCE_STATE"
+save_state "PUBLIC_IP" "$PUBLIC_IP"
+save_state "PRIVATE_IP" "$PRIVATE_IP"
+save_state "AVAILABILITY_ZONE" "$AVAILABILITY_ZONE"
+save_state "INSTANCE_TYPE" "$INSTANCE_TYPE_VALUE"
+
+        return
+
+    fi
+
+    log_info "No EC2 instance found."
+
+    log_info "Launching EC2 instance..."
+
+AMI_ID=$(load_state "AMI_ID")
+PUBLIC_SUBNET_ID=$(load_state "PUBLIC_SUBNET_ID")
+SECURITY_GROUP_ID=$(load_state "SECURITY_GROUP_ID")
+
+INSTANCE_ID=$(aws ec2 run-instances \
+    --region "$REGION" \
+    --image-id "$AMI_ID" \
+    --instance-type "$INSTANCE_TYPE" \
+    --key-name "$KEY_PAIR_NAME" \
+    --security-group-ids "$SECURITY_GROUP_ID" \
+    --subnet-id "$PUBLIC_SUBNET_ID" \
+    --associate-public-ip-address \
+    --tag-specifications \
+        "ResourceType=instance,Tags=[{Key=Name,Value=$EC2_NAME},{Key=Project,Value=$PROJECT_NAME},{Key=Environment,Value=$ENVIRONMENT},{Key=Owner,Value=$OWNER},{Key=ManagedBy,Value=$MANAGED_BY},{Key=Version,Value=$VERSION}]" \
+    --query "Instances[0].InstanceId" \
+    --output text)
+
+log_success "EC2 instance launched."
+
+log_info "Instance ID : $INSTANCE_ID"
+
+save_state "INSTANCE_ID" "$INSTANCE_ID"
+
+}
+
+###############################################################################
+# Delete EC2 Instance
+###############################################################################
+
+delete_ec2() {
+
+    log_section "Delete EC2 Instance"
+
+    INSTANCE_ID=$(load_state "INSTANCE_ID")
+
+    if [[ -z "$INSTANCE_ID" ]]; then
+        log_warning "No EC2 instance found in state."
+        return
+    fi
+
+    log_info "Terminating EC2 instance..."
+
+    aws ec2 terminate-instances \
+        --region "$REGION" \
+        --instance-ids "$INSTANCE_ID" \
+        >/dev/null
+
+    log_info "Waiting for EC2 termination..."
+
+    aws ec2 wait instance-terminated \
+        --region "$REGION" \
+        --instance-ids "$INSTANCE_ID"
+
+    log_success "EC2 instance terminated."
+
+}

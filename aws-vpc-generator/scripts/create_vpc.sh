@@ -65,7 +65,13 @@ main() {
 
     ensure_security_group
 
+    validate_ec2_dependencies
+
+    ensure_ec2
+
     show_state
+
+    show_summary
 
     log_section "Provisioning Completed"
 

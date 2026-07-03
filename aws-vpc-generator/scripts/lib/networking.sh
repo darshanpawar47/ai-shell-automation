@@ -339,3 +339,15 @@ ensure_route_association() {
     save_state "ROUTE_ASSOCIATION_ID" "$ASSOCIATION_ID"
 
 }
+
+###############################################################################
+# Ensure Elastic IP
+###############################################################################
+
+ensure_elastic_ip() {
+
+    log_section "Elastic IP"
+
+    # Implementation will be added next.
+
+}

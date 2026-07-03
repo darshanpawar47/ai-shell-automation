@@ -43,6 +43,22 @@ export PUBLIC_ROUTE_TABLE_NAME="ai-devops-public-rt"
 
 export PRIVATE_SUBNET_CIDR="10.0.2.0/24"
 
+###############################################################################
+# NAT Gateway Configuration
+###############################################################################
+
+export ELASTIC_IP_NAME="ai-devops-eip"
+
+export NAT_GATEWAY_NAME="ai-devops-nat"
+
+export PRIVATE_SUBNET_NAME="ai-devops-private-subnet"
+
+export PRIVATE_ROUTE_TABLE_NAME="ai-devops-private-rt"
+
+export PRIVATE_SUBNET_CIDR="10.0.2.0/24"
+
+export PRIVATE_SUBNET_AZ="ap-south-1a"
+
 
 ###############################################################################
 # Security Configuration
@@ -97,7 +113,7 @@ export PUBLIC_SECURITY_GROUP_NAME="ai-devops-public-sg"
 
 export EC2_NAME="ai-devops-web"
 
-export INSTANCE_TYPE="t2.micro"
+export INSTANCE_TYPE="t3.micro"
 
 export KEY_PAIR_NAME="ai-devops-key"
 
@@ -110,7 +126,7 @@ export AMI_ID=""
 
 export EC2_NAME="ai-devops-web"
 
-export INSTANCE_TYPE="t2.micro"
+export INSTANCE_TYPE="t3.micro"
 
 export ROOT_VOLUME_SIZE="20"
 

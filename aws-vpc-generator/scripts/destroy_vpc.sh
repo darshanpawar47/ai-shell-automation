@@ -44,6 +44,8 @@ fi
 
     delete_vpc
 
+    delete_ec2
+
     delete_state "IGW_ID"
 
     delete_state "VPC_ID"
